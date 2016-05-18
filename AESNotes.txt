@@ -1,0 +1,56 @@
+Program stuff:
+
+	Current To-Do:
+		-Decryption
+			-All inverse functions
+				-Inverse subBytes
+				-Inverse mixCol
+				-Inverse shiftRows
+		-Avalanche
+			-Averages calculated from the 127 different P and K
+		-Extra AES encryption
+		-Formatted Output
+			-Mainly just the table for the averages
+			-Maybe make a new struct type that stores a row's averages and expect that as function parameters
+			
+			
+
+	128 bit AES only
+	Inputs:
+		1) 16 byte plaintext block & 16 byte key block OR
+		2) 16 byte ciphertext block & 16 byte key block
+	Output:
+		1) 16 byte ciphertext block
+		2) 16 byte plaintext block
+		
+	Round number: 10
+	Expanded key size: 176 bytes/44 words
+	
+	
+	ShiftRow:
+		row 0 = no change
+		row 1 = 1 rotate to left
+		row 2 = 2 rotate to left
+		row 3 = 3 rotate to left
+		-----------------------------    -----------------------------
+		| a0,0 | a0,1 | a0,2 | a0,3 |    | a0,0 | a0,1 | a0,2 | a0,3 |
+		| a1,0 | a1,1 | a1,2 | a1,3 | -> | a1,1 | a1,2 | a1,3 | a1,0 |
+		| a2,0 | a2,1 | a2,2 | a2,3 |    | a2,2 | a2,3 | a2,0 | a2,1 |
+		| a3,0 | a3,1 | a3,2 | a3,3 |    | a3,3 | a3,0 | a3,1 | a3,2 |
+		-----------------------------    -----------------------------
+		
+	Sub Bytes:
+		a(i,j) = SBox[a(i,j)]
+		Value of a(i,j) becomes the value at the location a(i,j) in the sub box
+	
+	Mix Columns:
+		state * 2 3 1 1
+				1 2 3 1
+				1 1 2 3 
+				3 1 1 2
+
+				
+				0 4 8 c 	0 4 8 c	
+				1 5 9 d		5 9 d 1	
+				2 6 a e		a e 2 6
+				3 7 b f		f 3 7 b
