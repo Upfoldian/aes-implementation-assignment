@@ -14,12 +14,13 @@ namespace AES {
 	class Block {
 		private:
 			unsigned char array[4][4];
+
 		public:
 			Block();
 			Block(std::string s); //Takes first 16 characters of s and inits a block with it in the right order
 			
 			std::string toString(); //Outputs Block array elements
-			
+			int getHexValue(unsigned char c); //Helper function for class
 		unsigned char& operator() (int a, int b) { //Operator overload to allow array access quickly
 			return array[b][a];
 		}

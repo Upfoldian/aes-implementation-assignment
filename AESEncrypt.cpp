@@ -81,7 +81,7 @@ string byteToBinary(unsigned char c) {
 void printBlockBin(Block b) {
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
-			cout << byteToBinary(b(j,i)) << " ";
+			cout << byteToBinary(b(i,j)) << " ";
 		}
 		cout << endl;
 	}
@@ -99,45 +99,12 @@ int main() {
 		keyBlock = Block(line2);
 		cipherBlock = encrypt(plainBlock, keyBlock);
 		cout << "Plaintext: " << endl;
-		//printBlock(plainBlock);
 		printBlockBin(plainBlock);
 		cout << "Ciphertext: " << endl;
-		//printBlock(cipherBlock);
 		printBlockBin(cipherBlock);
 		cout << "Keytext: " << endl;
-		//printBlock(keyBlock);
 		printBlockBin(keyBlock);
-		/*
-		int pAES0[11], pAES1[11], pAES2[11], pAES3[11], pAES4[11];
-		int kAES0[11], kAES1[11], kAES2[11], kAES3[11], kAES4[11];
-		
-		getAverageUnderP(plainBlock, keyBlock, 0, pAES0);
-		getAverageUnderP(plainBlock, keyBlock, 1, pAES1);
-		getAverageUnderP(plainBlock, keyBlock, 2, pAES2);
-		getAverageUnderP(plainBlock, keyBlock, 3, pAES3);
-		getAverageUnderP(plainBlock, keyBlock, 4, pAES4);
-		
-		getAverageUnderK(plainBlock, keyBlock, 0, kAES0);
-		getAverageUnderK(plainBlock, keyBlock, 1, kAES1);
-		getAverageUnderK(plainBlock, keyBlock, 2, kAES2);
-		getAverageUnderK(plainBlock, keyBlock, 3, kAES3);
-		getAverageUnderK(plainBlock, keyBlock, 4, kAES4);
-		
-		clock_t ends = clock();
-		cout << "Running time(ms): " << (double) (ends - start) / (CLOCKS_PER_SEC/1000) << endl << endl;
-		cout << "P and Pi under K:" << endl;
-		cout << "Round\t\tAES0\tAES1\tAES2\tAES3\tAES4" << endl;
-		for (int i = 0; i < 11; i++) {
-			cout << dec << setw(5) << i << "\t\t" << setw(4) << pAES0[i] << "\t" << setw(4) << pAES1[i] << "\t";
-			cout << setw(4) << pAES2[i] << "\t" << setw(4) << pAES3[i] << "\t" << setw(4) << pAES4[i] << "\t" << endl;
-		}
-		cout << "P under K and Ki:" << endl;
-		cout << "Round\t\tAES0\tAES1\tAES2\tAES3\tAES4" << endl;
-		for (int i = 0; i < 11; i++) {
-			cout << dec << setw(5) << i << "\t\t" << setw(4) << kAES0[i] << "\t" << setw(4) << kAES1[i] << "\t";
-			cout << setw(4) << kAES2[i] << "\t" << setw(4) << kAES3[i] << "\t" << setw(4) << kAES4[i] << "\t" << endl;
-		}
-		*/
+
 	} else if (operation == "d") {
 		cipherBlock = Block(line1);
 		keyBlock = Block(line2);
@@ -275,123 +242,6 @@ Block encrypt(Block plain, Block key) {
 	plainCopy = addRoundKey(plainCopy, expKey[10]);
 	return plainCopy;
 }
-/*encryptRound is used in the calculation of the average bit difference functions*/
-Block encryptRound(Block plain, Block expandKey, int AEStype) {
-	if (AEStype != 1) plain = subBytes(plain);
-	if (AEStype != 2) plain = shiftRows(plain);
-	if (AEStype != 3) plain = mixColumns(plain);
-	if (AEStype != 4) plain = addRoundKey(plain, expandKey);
-	return plain;
-}
-/*Flips the bit found at (x,y) at location bit and returns the changed block*/
-Block changeBit(Block in, int x, int y, int bit) {
-	// Takes the byte location co-ords and bit value between 0-7 and outputs a block with that bit flipped
-	const static unsigned char bitVals[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80}; //Sets up a relation between bit num and number to XOR by
-	Block out = in;
-	out(x,y) = out(x,y) ^ bitVals[bit];
-	return out;
-}
-/*Calculates the bit difference between first and second. Used in average calculation functions*/
-int getBitDiff(Block first, Block second) {
-	unsigned char firstByte, secondByte;
-	int bitCount = 0;
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			firstByte = first(i,j);
-			secondByte = second(i,j);
-			unsigned char diffByte = firstByte ^ secondByte;
-			for (int i = 0; i < 8; i++) {
-				if (diffByte & 0x01 == 0x01) bitCount++;
-				diffByte >>= 1;
-			}
-		}
-	}
-	if (bitCount > 90) cout << bitCount << endl;
-	return bitCount;
-}
-/*	Both getAverageUnderP and getAverageUnderK return an integer array which contains the average
-	bit difference after each round in the comparison. For example, retArr[0] would contain the
-	average after 0 rounds
-*/
-void getAverageUnderP(Block plain, Block key, int AEStype, int(&retArr)[11]) {
-	/* Sums together the differing bits after each round and then divides by 128 at the end */
-	int total = 0;
-	int sum[11] = {1,0,0,0,0,0,0,0,0,0};
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			for (int k = 0; k < 8; k++) {
-				Block plainCopy = plain;
-				Block oneOff = changeBit(plainCopy,i,j,k);
-				Block expKey[11];
-				expandKey(expKey, key);
-				if (AEStype != 4) plainCopy = addRoundKey(plainCopy, expKey[0]);
-				if (AEStype != 4) oneOff = addRoundKey(oneOff, expKey[0]);
-				sum[0] += getBitDiff(plainCopy, oneOff);
-				for (int l = 1; l < 10; l++) {
-					plainCopy = encryptRound(plainCopy, key, AEStype);
-					oneOff = encryptRound(oneOff, key, AEStype);
-					sum[l] += getBitDiff(plainCopy, oneOff);
-				}
-				if (AEStype != 1) { 
-					plainCopy = subBytes(plainCopy);
-					oneOff = subBytes(oneOff);
-				}
-				if (AEStype != 2) { 
-					plainCopy = shiftRows(plainCopy);
-					oneOff = shiftRows(oneOff);
-				}
-				if (AEStype != 4) { 
-					plainCopy = addRoundKey(plainCopy, expKey[10]);
-					oneOff = addRoundKey(oneOff, expKey[10]);
-				}
-				sum[10] += getBitDiff(plainCopy, oneOff);
-			}
-		}
-	};
-	for (int i = 0; i < 11; i++) {
-		retArr[i] = floor((sum[i]/128.0)+0.5);
-	}
-}
-void getAverageUnderK(Block plain, Block key, int AEStype, int(&retArr)[11]) {
-	/* Sums together the differing bits after each round and then divides by 128 at the end */
-	int total = 0;
-	int sum[11] = {1,0,0,0,0,0,0,0,0,0};
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			for (int k = 0; k < 8; k++) {
-				Block keyOneOff = changeBit(key,i,j,k), stateOneOff = plain, plainCopy = plain;
-				Block expKeyOriginal[11], expKeyOneOff[11];
-				expandKey(expKeyOriginal, key);
-				expandKey(expKeyOneOff, keyOneOff);
-				//sum[0] += getBitDiff(plainCopy,stateOneOff);
-				if (AEStype != 4) plainCopy = addRoundKey(plainCopy, expKeyOriginal[0]);
-				if (AEStype != 4) stateOneOff = addRoundKey(stateOneOff, expKeyOneOff[0]);
-				sum[0] += getBitDiff(plainCopy,stateOneOff);
-				for (int l = 1; l < 10; l++) {
-					plainCopy = encryptRound(plainCopy, key, AEStype);
-					stateOneOff = encryptRound(stateOneOff, expKeyOneOff[l], AEStype);
-					sum[l] += getBitDiff(plainCopy, stateOneOff);
-				}
-				if (AEStype != 1) { 
-					plainCopy = subBytes(plainCopy);
-					stateOneOff = subBytes(stateOneOff);
-				}
-				if (AEStype != 2) { 
-					plainCopy = shiftRows(plainCopy);
-					stateOneOff = shiftRows(stateOneOff);
-				}
-				if (AEStype != 4) { 
-					plainCopy = addRoundKey(plainCopy, expKeyOriginal[10]);
-					stateOneOff = addRoundKey(stateOneOff, expKeyOneOff[10]);
-				}
-				sum[10] += getBitDiff(plainCopy, stateOneOff);
-			}
-		}
-	}
-	for (int i = 0; i < 11; i++) {
-		retArr[i] = floor((sum[i]/128.0)+0.5);
-	}
-}
 /*	The following functions are the inverse functions used in decrypting and the decrypt function itself.
 	the logic used in them should be straightforward and similar to the corresponding encryption functions.
  */
@@ -453,8 +303,8 @@ Block decrypt (Block cipher, Block key) {
 	cipher = invShiftRows(cipher);
 	cipher = addRoundKey(cipher, expKey[0]);
 	return cipher;
-}
-		
+}	
+
 		
 		
 		

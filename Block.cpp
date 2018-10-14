@@ -16,13 +16,12 @@ namespace AES {
 		int count = 0;
 		for (int y = 0 ; y < 4; y++) {
 			for (int x = 0 ; x < 4; x++) {
-				unsigned char currentByte = 0x00;
-				for (int i = 0; i < 8; i++) {
-					if (s[count++] == '1') {
-						currentByte += 1;
-					}
-					if (i != 7) currentByte <<= 1;					
-				}
+				unsigned char currentByte = 0x00, firstNib, secondNib;
+				
+				firstNib = getHexValue(s[count++]);
+				secondNib = getHexValue(s[count++]);
+
+				currentByte = (firstNib << 4) + secondNib;
 				array[x][y] = currentByte;
 			}
 		}
@@ -37,6 +36,18 @@ namespace AES {
 			out += '\n';
 		}
 		return out;
+	}
+
+	int Block::getHexValue(unsigned char c) {
+		if (c >= '0' && c <= '9') {
+			return c - 48;
+		} else if (c >= 'A' && c <= 'F') {
+			return c - 65 + 10;
+		} else if (c >= 'a' && c <= 'f') {
+			return c - 97 + 10;
+		} else {
+			return 0x0F;
+		}
 	}
 		
 };

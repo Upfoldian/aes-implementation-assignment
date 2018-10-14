@@ -1,5 +1,5 @@
 Program stuff:
-
+	Tester: http://extranet.cryptomathic.com/aescalc/index
 	Current To-Do:
 		-Decryption
 			-All inverse functions
